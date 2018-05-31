@@ -519,6 +519,16 @@ class TestGitOperations:
         assert child.signalstatus is None
 
     def test_update(self):
+        gpgdir = os.path.join(os.path.expanduser('~'), '.gnupg')
+        os.mkdir(gpgdir)
+
+        # Set a reliable default keyserver for the tests.
+        with open(os.path.join(gpgdir, 'gpg.conf'), 'a') as f:
+            f.write('keyserver hkp://pgp.mit.edu')
+
+        # Ensure correct permissions on .gnupg home directory.
+        os.chmod(gpgdir, 0700)
+
         cmd = os.path.join(os.path.dirname(CURRENT_DIR),
                            'securedrop_admin/__init__.py')
         ansible_base = os.path.join(NEW_TMP_DIR,
