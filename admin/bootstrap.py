@@ -92,7 +92,6 @@ def install_apt_dependencies(args):
                    python-yaml \
                    python-pip \
                    ccontrol \
-                   virtualenv \
                    libffi-dev \
                    libssl-dev \
                    libpython2.7-dev",
