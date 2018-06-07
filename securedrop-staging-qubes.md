@@ -10,13 +10,13 @@ We're going to create three new standalone Qubes VMs:
 - the monitoring VM
 - a VM to provision the app and monitoring VMs, using existing Ansible playbooks
 
-## download Ubuntu Trusty server ISO
+## Download Ubuntu Trusty server ISO
 
 On any exising Qube, download the Ubutnu Trusty server ISO, from
 
     http://releases.ubuntu.com/14.04/ubuntu-14.04.5-server-amd64.iso
 
-## create the "build" VM
+## Create the "build" VM
 
 We're going to build a single, minimally configured Ubuntu VM. Once it's bootable, we'll clone it for the application and monitoring VMs.
 
@@ -27,9 +27,9 @@ In `dom0`, do the following:
 
 Using the Qubes Settings interface (Q menu -> sd-build -> Qubes Settings), set the VM's kernel to "None", and give it at least 2 GB of RAM.
 
-While you're in the settings interface, note down the IP address Qubes gave the new VM and the configured gateway IP address.
+While you're in the settings interface, note the IP and gateway IP addresses Qubes gave the new VM: you'll need them for later configuration.
 
-### boot into installation medium
+### Boot into installation media
 
 In dom0:
 
@@ -75,7 +75,7 @@ Before we continue, let's allow your user to `sudo` without their password. Edit
 
 When initial configuration is done, `halt` the `sd-build` VM.
 
-## clone app vm as monitor vm
+## Clone VMs
 
 In dom0:
 
@@ -98,7 +98,7 @@ Finally, on each host edit `/etc/hostname` to reflect the machine's name.
 
 Halt each machine, then restart each from `dom0`. The prompt in each console should reflect the correct name of the VM. You should be able to ping IPs on the internet.
 
-### inter-VM networking
+### Inter-VM networking
 
 (Following https://www.qubes-os.org/doc/firewall/#enabling-networking-between-two-qubes)
 
@@ -116,13 +116,15 @@ Get a shell on `sys-firewall`. Enter the following
     sudo iptables -I FORWARD 2 -s <sd-build-addr> -d <sd-app-addr> -j ACCEPT
     sudo iptables -I FORWARD 2 -s <sd-build-addr> -d <sd-mon-addr> -j ACCEPT
 
-Now from your source vm, you should be able to do
+Add more lines as you see fit if you anticipate wanted to ssh to and from other VMs.
+
+Now from your "work" VM, you should be able to do
 
     ssh <user-you-created>@<ip-of-sd-build>
 
 and log in using the password you created.
 
-(If you were unable to connect, try adding the following on each VM):
+(If you were unable to connect, try adding the following on each destination VM, for each source which should be able to access it):
 
     sudo iptables -I INPUT -s <source address> -j ACCEPT
 
@@ -130,7 +132,7 @@ If everything worked as expected, make the changes persist over reboots: on the 
 
 (If required, on each destination VM, create/edit `/etc/rc.local` and add the `iptables` command you ran there (again without the `sudo`).
 
-### ssh using keys
+### SSH using keys
 
 Later we'll be using Ansible to provision the application VMs, so we should make sure we can ssh between those machines without needing to type a password. On `sd-build`:
 
@@ -144,10 +146,10 @@ Confirm that you're able to ssh from `sd-build` to `sd-mon` and `sd-app` without
 
 If you don't already have a shell, SSH to `sd-build`, where we'll run all of the following.
 
-### baby steps
+### Baby steps
 
-  sudo apt update
-  sudo apt install -y make git
+    sudo apt update
+    sudo apt install -y make git
 
 ### Docker
 
@@ -194,9 +196,9 @@ Exit your ssh session, then ssh back in. Confirm you can run containers as your 
 
 should work without error.
 
-### clone the repo
+### Clone the repo
 
-Clone the securedrop server repo: follow instructions at https://docs.securedrop.org/en/latest/development/setup_development.html#fork-clone-the-repository), and either copy an SSH keypair known to github onto your new VM, or create a new keypair there and tell github about it.
+Clone the securedrop server repo: follow instructions at https://docs.securedrop.org/en/latest/development/setup_development.html#fork-clone-the-repository. If you anticipate wanting to server development, either copy an SSH keypair known to Github onto `sd-build` VM, or create a new keypair there and tell Github about it.
 
 Decide where you want to clone source code to on sd-server. `cd` to that directory, and do:
 
@@ -211,7 +213,7 @@ We need some software on `sd-build` in order to build securedrop. In the root of
     mkvirtualenv -p /usr/bin/python2 securedrop
     workon securedrop
 
-Add `source /usr/share/virtualenvwrapper/virtualenvwrapper.sh` to your `~/.bashrc`. Now, when you log back in, you can
+Add `source /usr/share/virtualenvwrapper/virtualenvwrapper.sh` to your `~/.bashrc`. Later, when you ssh to `sd-build`, you'll only need to type
 
     workon securedrop
 
@@ -221,7 +223,7 @@ Install development requirements:
 
     pip install -r securedrop/requirements/develop-requirements.txt
 
-### build
+### Build
 
 Now we can build the .debs for the server!
 
@@ -229,7 +231,7 @@ Now we can build the .debs for the server!
 
 This will take some time.
 
-### configuration: keys
+### Configuration: GPG keys
 
 Before we can provision our application, we need to create two GPG keys: one for our document submissions, and one for OSSEC. Use
 
@@ -246,7 +248,7 @@ Copy each exported key to the `install_files/ansible-base/` directory.
 
 Now run `gpg --fingerprint` to show the fingerprints of both the above keys. You'll need those for the next step.
 
-### configuration
+### Configuration: securedrop-setup
 
 We're going to use `securedrop-setup` to configure our staging instance before deployment.
 
@@ -291,9 +293,9 @@ on dom0.
 
 If all goes well after some time the `sd-app` and `sd-mon` VMs will be automatically configured to run the securedrop staging environment.
 
-## post-provisioning
+## Post-provisioning
 
-### create admin user
+### Create admin user
 
 SSH to `sd-app`. You should be able to do
 
@@ -301,9 +303,9 @@ SSH to `sd-app`. You should be able to do
     cd /var/www/securedrop
     ./manage.py add-admin
 
-### tor service addresses
+### Tor service addresses
 
-We want the Tor service addresses, of course.
+We need the Tor service addresses, of course, so we can access the source and journalist interfaces.
 
 On `sd-app`, do:
 
@@ -316,3 +318,15 @@ Get the source address with:
     sudo cat /var/lib/tor/services/source/hostname
 
 Use Tor Browser in your `anon-whonix` Qube to try connecting to the source interface... make yourself a source and leave a submission!
+
+## That's it
+
+You should now have a running, configured SecureDrop staging instance running on your Qubes machine.
+
+For day-to-day operation, you should only need to run the `sd-app` (and `sd-mon`?) VMs. To do development work on the the SecureDrop server, make your changes on `sd-build`, and build and deploy as covered in the SecureDrop documentation.
+
+## Notes
+
+- We can *probably* replace `sd-build` with a normal Qubes VM. There would be some advantages to this, not the least of which would be the ability to copy/paste to and from the VM, and to run a browser in the VM.
+- You may need to bump up the memory for `sd-build` or `sd-app` past 2GB. I was running in to some issues which seemed to be solved by giving the VMs more memory.
+- `securedrop-admin` is made for the Tails environment and had to be modified a bit to run on `sd-build`. Also it interacts poorly with the existing virtual environment created there. We should decide if we need it at all, and if so how we can modify it to work better in for this task. Or perhaps we don't need it at all, if we instead can automatically configure the build, like we do in the existing Vagrant-based staging provisioning workflow.
