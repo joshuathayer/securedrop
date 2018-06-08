@@ -16,7 +16,7 @@ tor_hidden_services_parent_dir: /var/lib/tor/services
 # to route to a specific IP host
 admin_net_int:
   Linux:
-    cmd: "/bin/ip r get "
+    cmd: "ip r get "
     rgx: "(?<=dev )\\w+"
   Darwin:
     cmd: "/sbin/route -n get "
