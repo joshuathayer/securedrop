@@ -1,0 +1,7 @@
+---
+- name: Preconfigure hosts for networking
+  hosts: staging
+  tasks:
+    - name: Edit DNS config.
+      become: yes
+      shell: echo 8.8.8.8 | sudo tee -a /etc/resolv.conf
