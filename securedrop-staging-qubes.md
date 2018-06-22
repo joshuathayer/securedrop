@@ -194,30 +194,44 @@ Now we can build the .debs for the server!
 
     make build-debs
 
-This will take some time. A test fails at the end. I think that's OK.
+This will take some time.
 
 ## Managing Qubes RPC for Admin API capability
 
 (These docs are WIP!) You'll need to grant the "work/sd-dev" VM the ability to create other VMs. Here is an example of an extremely permissive policy, that essentially makes "work/sd-dev" as powerful as dom0 (we must reduce these grants before submitting for review):
 
 ```
-/etc/qubes-rpc/policy/admin.vm.property.List:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/admin.vm.List:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/admin.vm.List:work $anyvm allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-local-rwx:#work $tag:created-by-work allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-local-rwx:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-local-rwx:work $anyvm allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-global-ro:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-global-ro:work $anyvm allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-global-rwx:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/include/admin-global-rwx:work $anyvm allow,target=$adminvm
-/etc/qubes-rpc/policy/admin.property.List:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/admin.vm.Create.StandaloneVM:work $adminvm allow,target=$adminvm
-/etc/qubes-rpc/policy/admin.vm.Create.StandaloneVM:work $anyvm allow,target=$adminvm
-/etc/qubes-rpc/policy.RegisterArgument:    # argument exceed 64 bytes, but that's fine, the call just wont work
+/etc/qubes-rpc/policy/admin.vm.property.List:
+  sd-dev $adminvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy/admin.vm.List:
+ sd-dev $adminvm allow,target=$adminvm
+ sd-dev $anyvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy/admin.property.List:
+  sd-dev $adminvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy/admin.vm.Create.StandaloneVM:
+  sd-dev $adminvm allow,target=$adminvm
+  sd-dev $anyvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy/include/admin-local-rwx:
+  sd-dev $adminvm allow,target=$adminvm
+  sd-dev $anyvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy/include/admin-global-ro:
+  sd-dev $adminvm allow,target=$adminvm
+  sd-dev $anyvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy/include/admin-global-rwx:
+  sd-dev $adminvm allow,target=$adminvm
+  sd-dev $anyvm allow,target=$adminvm
+
+/etc/qubes-rpc/policy.RegisterArgument:
+   # argument exceed 64 bytes, but that's fine, the call just wont work
 ```
 
-In the example above, the SD dev machine is "work", but let's use "sd-dev" throughout instead.
+XXX Conor! not sure why that last line is in here...
 
 ## Creating staging instance
 
@@ -227,11 +241,9 @@ After creating the StandaloneVMs as described above:
 * sd-app-base
 * sd-mon-base
 
-Run:
+And after building the Securedrop .debs, we can finally provision the staging environment. In from the root of the Securedrop project in `sd-dev`, run:
 
-```
-molecule test -s qubes-staging
-```
+    molecule test -s qubes-staging
 
 Note that since the reboots don't automatically bring the machines back up, due to the fact that the machines are Standalone VMs, the "test" action will fail by default, unless you judiciously run `qvm-start <vm>` for each VM after they've shut down. You can use the smaller constituent Molecule actions, rather than the bundled "test" action:
 
