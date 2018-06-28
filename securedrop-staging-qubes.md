@@ -33,7 +33,7 @@ On `sd-dev`, download the Ubutnu Trusty server ISO, from
 
     http://releases.ubuntu.com/14.04/ubuntu-14.04.5-server-amd64.iso
 
-(you can start Firefox to do this, for example, or use `wget`)
+(you can start Firefox to do this, for example, or start a terminal and use `wget`)
 
 After downloading, confirm the ISO's validity by checking its SHA256 sum. Check against the shasum below and value at http://releases.ubuntu.com/14.04/SHA256SUMS :
 
@@ -49,7 +49,7 @@ In `dom0`, do the following:
     qvm-create sd-trusty-base --class StandaloneVM --property virt_mode=hvm --label green
     qvm-volume extend sd-trusty-base:root 20g
 
-Using the Qubes Settings interface (Q menu -> sd-build -> Qubes Settings), set the VM's kernel to "None", and set its maximum and initial memory to 2GB.
+Using the Qubes Settings interface (Q menu -> sd-trusty-base -> Qubes Settings), set the VM's kernel to "None", and set its maximum and initial memory to 2GB.
 
 While you're in the settings interface, note the IP and gateway IP addresses Qubes gave the new VM: you'll need them for later configuration.
 
@@ -63,13 +63,13 @@ where `download-vm` is the name of the VM to which you downloaded the ISO.
 
 Start configuration.
 
-At some point you'll need to manually set up the network interface, after DHCP failss. If you didn't mark it down down earlier, you can check the machine's IP and gateway via the Qubes GUI. When prompted, use enter that IP address, with a `/24` netmask (for example: `10.137.0.16/24`. Use Qubes' internal resolvers as DNS servers: `10.139.1.1` and `10.139.1.2`. Use the gateway address indicated in the Qubes Settings UI.
+At some point you'll need to manually set up the network interface, after DHCP failss. If you didn't mark it down down earlier, you can check the machine's IP and gateway via the Qubes GUI. When prompted, use enter that IP address, with a `/24` netmask (for example: `10.137.0.16/24`. Use the IP address give in the settings interface for the VM's gateway (probably `10.137.0.6`). Use Qubes' internal resolvers as DNS servers: `10.139.1.1` and `10.139.1.2`.
 
-Give the new VM the hostname `sd-trusty-base`.
+Give the new VM the hostname `sd-trusty-base`, without a domain name.
 
 You'll be prompted to add a "regular" user for the VM: this is the user you'll be using later to SSH into the VM. We're using a standardized name/password pair: `securedrop/securedrop`.
 
-When presented with the partitioning menu, choose "Guided - use entire disk". There's no need to encrypt the filesystem. When prompted, select "Virtual disk 1 (xvda)" to partition.
+When presented with the partitioning menu, choose "Guided - use entire disk" (not the default LVM choice). There's no need to encrypt the filesystem. When prompted, select "Virtual disk 1 (xvda)" to partition.
 
 During software installation, make sure you install the SSH server. You don't need to install anything else.
 
@@ -173,6 +173,12 @@ Later we'll be using Ansible to provision the application VMs, so we should make
 
 Confirm that you're able to ssh as user `securedrop` from `sd-dev` to `sd-mon` and `sd-app` without being prompted for a password.
 
+### Qubes tools on sd-dev
+
+`sd-dev` is going to be administering other VMs, so it needs some Qubes tools installed:
+
+    sudo apt install qubes-core-admin-client python-qubesadmin
+
 ## SecureDrop Installation
 
 We're going to configure `sd-dev` to build the securedrop `.deb`'s, then we're going to build them, and provision `sd-app` and `sd-mon`.
@@ -247,11 +253,9 @@ And after building the Securedrop .debs, we can finally provision the staging en
 
 Note that since the reboots don't automatically bring the machines back up, due to the fact that the machines are Standalone VMs, the "test" action will fail by default, unless you judiciously run `qvm-start <vm>` for each VM after they've shut down. You can use the smaller constituent Molecule actions, rather than the bundled "test" action:
 
-```
-molecule create -s qubes-staging
-molecule prepare -s qubes-staging
-molecule converge -s qubes-staging
-```
+    molecule create -s qubes-staging
+    molecule prepare -s qubes-staging
+    molecule converge -s qubes-staging
 
 ## That's it
 
