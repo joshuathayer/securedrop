@@ -50,10 +50,13 @@ In `dom0`, do the following:
 
     qvm-create sd-trusty-base --class StandaloneVM --property virt_mode=hvm --label green
     qvm-volume extend sd-trusty-base:root 20g
+    qvm-prefs sd-trusty-base kernel ''
+    qvm-prefs sd-trusty-base memory 2000
+    qvm-prefs sd-trusty-base maxmem 2000
+    qvm-prefs sd-trusty-base
 
-Using the Qubes Settings interface (Q menu -> sd-build -> Qubes Settings), set the VM's kernel to "None", and set its maximum and initial memory to 2GB.
-
-While you're in the settings interface, note the IP and gateway IP addresses Qubes gave the new VM: you'll need them for later configuration.
+The last command above will display the VM configuration. Note the IP and gateway IP addresses
+Qubes gave the new VM: you'll need them for later configuration.
 
 ### Boot into installation media
 
