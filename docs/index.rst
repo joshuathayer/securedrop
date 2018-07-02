@@ -120,6 +120,7 @@ anonymous sources.
    development/portable_demo
    development/release_management
    development/dockerbuildmaint
+   development/qubes_staging
 
 .. toctree::
   :caption: Threat Model
