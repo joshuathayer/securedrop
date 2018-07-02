@@ -29,16 +29,18 @@ and set up its "Q" app menu:
 
 ## Download Ubuntu Trusty server ISO
 
-On `sd-dev`, download the Ubutnu Trusty server ISO, from
+On `sd-dev`, download the Ubuntu Trusty server ISO, along with corresponding
+checksum and signature files.
 
-    http://releases.ubuntu.com/14.04/ubuntu-14.04.5-server-amd64.iso
+    wget http://releases.ubuntu.com/14.04/ubuntu-14.04.5-server-amd64.iso
+    wget https://mirrors.ocf.berkeley.edu/ubuntu-releases/14.04.5/SHA256SUMS
+    wget https://mirrors.ocf.berkeley.edu/ubuntu-releases/14.04.5/SHA256SUMS.gpg
 
-(you can start Firefox to do this, for example, or use `wget`)
+After downloading, confirm the ISO's validity by checking its SHA256 sum.
+Note that you may need to download the GPG keys to validate the signature.
 
-After downloading, confirm the ISO's validity by checking its SHA256 sum. Check against the shasum below and value at http://releases.ubuntu.com/14.04/SHA256SUMS :
-
-    $ sha256sum ubuntu-14.04.5-server-amd64.iso
-    dde07d37647a1d2d9247e33f14e91acb10445a97578384896b4e1d985f754cc1  ubuntu-14.04.5-server-amd64.iso
+    gpg --verify SHA256SUMS.gpg SHA256SUMS
+    sha256sum --check --ignore-missing SHA256SUMS
 
 ## Create the Trusty base VM
 
